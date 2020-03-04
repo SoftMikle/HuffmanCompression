@@ -1,15 +1,25 @@
 package com.soft.misha.huffman.compress;
 
 import com.soft.misha.huffman.data.Node;
-import lombok.Data;
 
+import java.io.*;
 import java.util.*;
 
 
 public class Compressor {
+    private static final int TYPE_INT = 1;
+    private static final int TYPE_STRING = 2;
     private String text;
+    PriorityQueue<Node> occurrences;
+    Node tree;
+    Map<String, String> dictionary;
+    List<Integer> compressedText;
 
-    public Map<Character, Integer> calcOccurrence() {
+    public Compressor(String text) {
+        this.text = text;
+    }
+
+    private Map<Character, Integer> calcOccurrence() {
         var occurrences = new HashMap<Character, Integer>();
 
         for (char c : text.toCharArray()) {
@@ -22,14 +32,13 @@ public class Compressor {
         return occurrences;
     }
 
-    public PriorityQueue<Node> calcOccurrenceNode() {
-        Comparator<Node> nodeComparator = Comparator.comparingInt(Node::getValue);
-        var nodes = new PriorityQueue<>(nodeComparator);
+    private PriorityQueue<Node> calcOccurrenceNode() {
+        var nodes = new PriorityQueue<>(Comparator.comparingInt(Node::getValue));
         calcOccurrence().forEach((key, value) -> nodes.add(new Node(key.toString(), value)));
         return nodes;
     }
 
-    public Node buildHuffmanTree() {
+    private Node buildHuffmanTree() {
         var occurrence = calcOccurrenceNode();
         while (occurrence.size() > 1) {
             Node nodeLeft = occurrence.poll();
@@ -43,10 +52,9 @@ public class Compressor {
         return root;
     }
 
-    public Map<String, String> buildDictionary() {
+    private Map<String, String> buildDictionary() {
         HashMap<String, String> dictionary = new HashMap<>();
-        Node node = buildHuffmanTree();
-        buildPath(node, "", dictionary);
+        buildPath(tree, "", dictionary);
         return dictionary;
     }
 
@@ -60,16 +68,19 @@ public class Compressor {
     }
 
     public List<Integer> compress() {
-        List<Integer> ints = new ArrayList<>();
-        Map<String, String> dictionary = buildDictionary();
+        occurrences = calcOccurrenceNode();
+        tree = buildHuffmanTree();
+        dictionary = buildDictionary();
+
+        List<Integer> buckets = new ArrayList<>();
         int bitCounter = 0;
         int coder = 0;
-        for (char c : getText().toCharArray()) {
+        for (char c : text.toCharArray()) {
             String key = dictionary.get(String.valueOf(c));
             for (char againC : key.toCharArray()) {
                 if (bitCounter == 31) {
                     bitCounter = 0;
-                    ints.add(coder);
+                    buckets.add(coder);
                     coder = 0;
                 }
                 if (againC == '0') {
@@ -81,51 +92,58 @@ public class Compressor {
                 bitCounter++;
             }
         }
-        ints.add(coder);
-        ints.add(bitCounter);
-        return ints;
+        buckets.add(coder);
+        buckets.add(bitCounter);
+        compressedText = buckets;
+        return compressedText;
     }
 
-    //    public void compressToFile(){
-//        var destination="compressed.hf";
-//        try {
-//            FileWriter fileWriter = new FileWriter(destination);
-//            BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(destination));
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
+    public void writeToFile() {
+
+        try (FileWriter fileWriter = new FileWriter("myfile.mf")){
+            DataOutputStream dos = new DataOutputStream(new FileOutputStream("myfile.mf"));
+            dos.writeInt(compressedText.size());
+            for (int i = 0; i < compressedText.size(); i++) {
+                dos.writeInt(compressedText.get(i));
+            }
+            dos.flush();
+            ObjectOutputStream ous = new ObjectOutputStream(dos);
+            ous.writeObject(dictionary);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+//    public String intToBinary(int number, int length) {
+//        char[] chars = new char[31];
+//        for (int j = length - 1; j > -1; j--) {
+//            chars[j] = String.valueOf(number % 2).charAt(0);
+//            number >>= 1;
 //        }
+//        return String.valueOf(chars);
+//    }
+//
+//    public String toBinaryText(List<Integer> integers) {
+//        String answer = "";
+//        int lastNumberCounter = integers.remove(integers.size() - 1);
+//        int lastNumber = integers.remove(integers.size() - 1);
+//        System.out.println("integers = " + integers.size());
+//        int integer;
+//        for (int i = 0; i < integers.size(); i++) {
+//            integer = integers.get(i);
+//            answer += intToBinary(integer, 31);
+//        }
+//
+//        answer += intToBinary(lastNumber, lastNumberCounter);
+//        return answer;
 //    }
 
-    public String intToBinary(int number, int length) {
-        char[] chars = new char[31];
-        for (int j = length - 1; j > -1; j--) {
-            chars[j] = String.valueOf(number % 2).charAt(0);
-            number >>= 1;
-        }
-        return String.valueOf(chars);
-    }
-
-    public String toBinaryText(List<Integer> integers) {
-        String answer = "";
-        int lastNumberCounter = integers.remove(integers.size() - 1);
-        int lastNumber = integers.remove(integers.size() - 1);
-        System.out.println("integers = " + integers.size());
-        int integer;
-        for (int i = 0; i < integers.size(); i++) {
-            integer = integers.get(i);
-            answer += intToBinary(integer, 31);
-        }
-
-        answer += intToBinary(lastNumber, lastNumberCounter);
-        return answer;
-    }
-
-    public String compressToConsole() {
-        List<Integer> compressUtil = compress();
-        String answer = toBinaryText(compressUtil);
-        return answer;
-    }
+//    public String compressToConsole() {
+//        List<Integer> compressUtil = compress();
+//        String answer = toBinaryText(compressUtil);
+//        return answer;
+//    }
 
     public char getCharacter(Node node, String path) {
         char[] charPath = path.toCharArray();
@@ -142,7 +160,6 @@ public class Compressor {
     public String decompress(String compressedText) {
         String decompressed = "";
         String tmp = "";
-        Map<String, String> dictionary = buildDictionary();
         Node tree = buildHuffmanTree();
         for (int i = 0; i < compressedText.toCharArray().length; i++) {
             tmp += compressedText.charAt(i);

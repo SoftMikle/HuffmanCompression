@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorator="layout">
+<head>
+    <meta charset="UTF-8">
+    <title>compress</title>
+    <style>
+        .card-text {
+            word-break: break-all;
+        }
+        .card-console {
+            background: black;
+            color: aliceblue;
+        }
+        .card-scroll {
+            height:250px;
+            overflow-y: scroll !important;
+        }
+        th {
+            min-width: 10em !important;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card mb-2 mt-2">
+        <div class="card-header">
+            Please input text
+        </div>
+        <div class="card-body">
+            <form method="POST" action="/">
+                <div class="form-group">
+                    <label for="exampleFormControlTextarea1">your text</label>
+                    <textarea class="form-control" id="exampleFormControlTextarea1" rows="8" name="text"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+    </div>
+    <div class="card mb-2">
+        <div class="card-header">
+            Result Data
+        </div>
+        <div class="card-body" th:if="${res}">
+            <div class="table">
+                <table>
+                    <tr>
+                        <th>text</th>
+                        <td class="card-text">
+                            <div th:text="${res.text}" class="card-scroll"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>result text</th>
+                        <td class="card-text">
+                            <div th:text="${res.resultText}" class="card-scroll"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>results equals</th>
+                        <td th:text="${#strings.equals(res.text, res.resultText)}">text</td>
+                    </tr>
+                    <tr>
+                        <th>size: start / end</th>
+                        <td th:text="${#strings.length(res.binaryText)} + ' / ' + ${#strings.length(res.binaryCompressText)}">text</td>
+                    </tr>
+                    <tr>
+                        <th>binary value</th>
+                        <td class="card-text">
+                            <div th:text="${res.binaryText}" class="card-scroll card-console"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>binary result value</th>
+                        <td class="card-text">
+                            <div th:text="${res.binaryCompressText}" class="card-scroll card-console"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>table tree</th>
+                        <td>
+                            <table class="table table-sm">
+                                <thead>
+                                <tr>
+                                    <th>character</th>
+                                    <th>weight</th>
+                                    <th>code</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="r : ${res.makeCodes}">
+                                    <td th:text="${r.character}"></td>
+                                    <td th:text="${r.weight}"></td>
+                                    <td th:text="${r.code}"></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
