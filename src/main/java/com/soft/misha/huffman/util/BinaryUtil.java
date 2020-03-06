@@ -1,4 +1,4 @@
-package ua.com.alevel.binary.util;
+package com.soft.misha.huffman.util;
 
 import lombok.experimental.UtilityClass;
 

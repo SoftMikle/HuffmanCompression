@@ -85,15 +85,13 @@
                                 <thead>
                                 <tr>
                                     <th>character</th>
-                                    <th>weight</th>
                                     <th>code</th>
                                 </tr>
                                 </thead>
                                 <tbody>
-                                <tr th:each="r : ${res.makeCodes}">
-                                    <td th:text="${r.character}"></td>
-                                    <td th:text="${r.weight}"></td>
-                                    <td th:text="${r.code}"></td>
+                                <tr th:each="r : ${res.occurrences}">
+                                    <td th:text="${r.key}"></td>
+                                    <td th:text="${r.value}"></td>
                                 </tr>
                                 </tbody>
                             </table>

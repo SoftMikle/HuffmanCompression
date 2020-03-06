@@ -1,10 +1,7 @@
-package com.soft.misha.huffman.compress;
-
-import com.soft.misha.huffman.data.Node;
+package com.soft.misha.huffman.logic;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -28,7 +25,6 @@ public class Decompressor {
             dictionary = (Map<String, String>) ois.readObject();
 
             dictionary = dictionary.entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
-            System.out.println("collect = " + dictionary);
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }

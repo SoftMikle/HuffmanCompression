@@ -1,4 +1,4 @@
-package com.soft.misha.huffman.compress;
+package com.soft.misha.huffman.logic;
 
 import com.soft.misha.huffman.data.Node;
 
@@ -7,13 +7,13 @@ import java.util.*;
 
 
 public class Compressor {
-    private static final int TYPE_INT = 1;
-    private static final int TYPE_STRING = 2;
     private String text;
+    String binaryText;
     PriorityQueue<Node> occurrences;
     Node tree;
     Map<String, String> dictionary;
-    List<Integer> compressedText;
+    List<Integer> compressedTextInInts;
+    String compressedText;
 
     public Compressor(String text) {
         this.text = text;
@@ -94,17 +94,18 @@ public class Compressor {
         }
         buckets.add(coder);
         buckets.add(bitCounter);
-        compressedText = buckets;
-        return compressedText;
+        compressedTextInInts = buckets;
+        compressedText = intsToBinaryText();
+        return compressedTextInInts;
     }
 
     public void writeToFile() {
 
         try (FileWriter fileWriter = new FileWriter("myfile.mf")){
             DataOutputStream dos = new DataOutputStream(new FileOutputStream("myfile.mf"));
-            dos.writeInt(compressedText.size());
-            for (int i = 0; i < compressedText.size(); i++) {
-                dos.writeInt(compressedText.get(i));
+            dos.writeInt(compressedTextInInts.size());
+            for (int i = 0; i < compressedTextInInts.size(); i++) {
+                dos.writeInt(compressedTextInInts.get(i));
             }
             dos.flush();
             ObjectOutputStream ous = new ObjectOutputStream(dos);
@@ -115,29 +116,28 @@ public class Compressor {
 
     }
 
-//    public String intToBinary(int number, int length) {
-//        char[] chars = new char[31];
-//        for (int j = length - 1; j > -1; j--) {
-//            chars[j] = String.valueOf(number % 2).charAt(0);
-//            number >>= 1;
-//        }
-//        return String.valueOf(chars);
-//    }
-//
-//    public String toBinaryText(List<Integer> integers) {
-//        String answer = "";
-//        int lastNumberCounter = integers.remove(integers.size() - 1);
-//        int lastNumber = integers.remove(integers.size() - 1);
-//        System.out.println("integers = " + integers.size());
-//        int integer;
-//        for (int i = 0; i < integers.size(); i++) {
-//            integer = integers.get(i);
-//            answer += intToBinary(integer, 31);
-//        }
-//
-//        answer += intToBinary(lastNumber, lastNumberCounter);
-//        return answer;
-//    }
+    public String intToBinary(int number, int length) {
+        char[] chars = new char[31];
+        for (int j = length - 1; j > -1; j--) {
+            chars[j] = String.valueOf(number % 2).charAt(0);
+            number >>= 1;
+        }
+        return String.valueOf(chars);
+    }
+
+    public String intsToBinaryText() {
+        StringBuffer answer = new StringBuffer();
+        int lastNumberCounter = compressedTextInInts.get(compressedTextInInts.size() - 1);
+        int lastNumber = compressedTextInInts.get(compressedTextInInts.size() - 2);
+        int integer;
+        for (int i = 0; i < compressedTextInInts.size() - 2; i++) {
+            integer = compressedTextInInts.get(i);
+            answer.append(intToBinary(integer, 31));
+        }
+
+        answer.append(intToBinary(lastNumber, lastNumberCounter));
+        return answer.toString();
+    }
 
 //    public String compressToConsole() {
 //        List<Integer> compressUtil = compress();
@@ -157,16 +157,16 @@ public class Compressor {
         return node.getKey().charAt(0);
     }
 
-    public String decompress(String compressedText) {
+    public String decompress() {
         String decompressed = "";
-        String tmp = "";
+        StringBuilder tmp = new StringBuilder();
         Node tree = buildHuffmanTree();
         for (int i = 0; i < compressedText.toCharArray().length; i++) {
-            tmp += compressedText.charAt(i);
+            tmp.append(compressedText.charAt(i));
 
-            if (dictionary.containsValue(tmp)) {
-                decompressed += getCharacter(tree, tmp);
-                tmp = "";
+            if (dictionary.containsValue(tmp.toString())) {
+                decompressed += getCharacter(tree, tmp.toString());
+                tmp = new StringBuilder();
             }
         }
         return decompressed;
